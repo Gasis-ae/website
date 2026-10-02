@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/staticwebapp.config.json",
   "trailingSlash": "always",
   "routes": [
-    { "route": "/about-us-2", "redirect": "/about-us/", "statusCode": 301 },
     { "route": "/about-us-2/", "redirect": "/about-us/", "statusCode": 301 },
     { "route": "/src/*", "statusCode": 404 },
     { "route": "/build.py", "statusCode": 404 },
