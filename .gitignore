@@ -1,0 +1,10 @@
+# Deployment secrets must never be committed
+*.token
+.gasis-swa-token
+.env
+
+# Local tooling
+node_modules/
+.swa/
+__pycache__/
+.DS_Store

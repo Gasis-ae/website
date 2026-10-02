@@ -62,20 +62,92 @@ The site is static, so form submissions need a destination. Open
   email client with the message pre-filled to `business@gasis.ae` /
   `help@gasis.ae`.
 
-## Hosting
+## Deployment (Azure Static Web Apps, Free plan)
 
-Upload the whole folder (everything except `src/`, `build.py` and `.claude/`
-if you like, though they are harmless) to any of:
+The customer portal already runs in Azure, so the website lives in the same
+tenant. The **Free** plan of Azure Static Web Apps costs nothing, includes a
+global CDN, automatic HTTPS, two custom domains and 100 GB of bandwidth a
+month, which is far more than a brochure site uses.
 
-- **Cloudflare Pages / Netlify / Vercel / GitHub Pages** — free, global CDN,
-  automatic HTTPS. Drag-and-drop the folder or connect a Git repository.
-- **Any shared hosting or VPS** (Apache, Nginx, IIS) — copy the files into the
-  web root. Directory-style URLs (`/about-us/`) work because each page is an
-  `index.html` inside its folder.
+The repository lives at `github.com/Gasis-ae/website`. Every push to `main`
+is published automatically by the GitHub Actions workflow in
+`.github/workflows/azure-static-web-apps.yml`. Pull requests get a temporary
+preview URL, posted as a comment on the PR, which disappears when the PR is
+closed.
 
-Point the `gasis.ae` DNS A/CNAME record at the new host and the site is live.
-No PHP, MySQL or WordPress is required, so downtime from plugin updates or
-server-side compromises is no longer possible.
+### One-time setup
+
+1. In the Azure portal choose **Create a resource → Static Web App**.
+   - Subscription / resource group: the one the portal uses (or a new
+     `rg-gasis-web`).
+   - Name: `gasis-website`. Plan type: **Free**. Region: closest available
+     (for example *East Asia* or *West Europe*; the CDN serves globally anyway).
+   - Deployment source: **GitHub**. Sign in, pick organisation `Gasis-ae`,
+     repository `website`, branch `main`.
+   - Build presets: **Custom**. App location `/`, Api location empty,
+     Output location empty.
+2. Azure commits its own workflow file to the repository, named like
+   `.github/workflows/azure-static-web-apps-<random>.yml`, and creates a
+   repository secret named `AZURE_STATIC_WEB_APPS_API_TOKEN_<RANDOM>`.
+   We keep our own workflow instead because it regenerates the pages from
+   `src/` before uploading. So, once:
+   - `git pull`, delete the generated `azure-static-web-apps-<random>.yml`,
+     commit and push.
+   - In GitHub → **Settings → Secrets and variables → Actions**, add a secret
+     named exactly `AZURE_STATIC_WEB_APPS_API_TOKEN`. Its value is the
+     deployment token from the Azure portal (the Static Web App →
+     **Overview → Manage deployment token**). You can then delete the
+     randomly-suffixed secret Azure created.
+3. Open the **Actions** tab, run *Deploy to Azure Static Web Apps* once by
+   hand (or just push). The job log ends with the `*.azurestaticapps.net`
+   URL: check the site there before changing DNS.
+
+### Day-to-day
+
+Edit, commit, push to `main`. That is the whole deployment. To preview a
+larger change first, push a branch and open a pull request; the workflow
+comments a preview link on it.
+
+### Manual fallback
+
+If GitHub is unavailable, `./deploy.sh` uploads the folder directly with the
+Static Web Apps CLI. It needs the same deployment token stored in
+`~/.gasis-swa-token` (never commit it).
+
+`staticwebapp.config.json` tells Azure to add trailing slashes, return a 301
+for the old `/about-us-2/` URL, serve `404.html` for unknown paths, cache
+fonts and images, hide `src/` and the build scripts, and send basic security
+headers.
+
+### Custom domain and DNS cut-over
+
+1. In the Static Web App open **Custom domains → Add**.
+2. Add `www.gasis.ae` first: Azure asks for a CNAME record pointing at the
+   `*.azurestaticapps.net` host. Create it at your DNS provider.
+3. Add the apex `gasis.ae`: Azure asks for a TXT record to prove ownership,
+   then needs the apex to point at the app. Apex domains cannot use a plain
+   CNAME, so either
+   - move the zone to **Azure DNS** (about USD 0.50/month) and create an
+     *alias* record, which the portal offers to do for you, or
+   - if the current DNS provider supports ALIAS/ANAME/CNAME-flattening
+     (Cloudflare does, free), use that.
+4. Set `gasis.ae` as the default domain so `www` redirects to it (or the other
+   way round, your choice). Certificates are issued and renewed automatically.
+5. Lower the DNS TTL to 300 seconds a day before the switch so the change
+   propagates quickly, and keep the old hosting alive for 24–48 hours.
+
+**Before you start, confirm who controls the gasis.ae registrar and DNS
+login.** If the previous IT team holds it, request a transfer of the
+registrar account to the company now; without it no cut-over is possible.
+
+### Other free options
+
+If you prefer not to use Azure: Cloudflare Pages, Netlify and GitHub Pages
+all host this folder for free too. Any ordinary web server (Apache, Nginx,
+IIS) also works: copy the files into the web root. Directory-style URLs
+(`/about-us/`) work because each page is an `index.html` inside its folder.
+Only `staticwebapp.config.json` is Azure-specific; the `about-us-2/index.html`
+redirect page covers that case on other hosts.
 
 ## Local preview
 

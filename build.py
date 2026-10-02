@@ -48,6 +48,7 @@ PAGES = {
     "message-from-management.html": "message-from-management/index.html",
     "services.html": "services/index.html",
     "contact-us.html": "contact-us/index.html",
+    "404.html": "404.html",
 }
 
 ICONS = json.loads((SRC / "icons.json").read_text(encoding="utf-8"))

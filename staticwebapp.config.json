@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "trailingSlash": "always",
+  "routes": [
+    { "route": "/about-us-2", "redirect": "/about-us/", "statusCode": 301 },
+    { "route": "/about-us-2/", "redirect": "/about-us/", "statusCode": 301 },
+    { "route": "/src/*", "statusCode": 404 },
+    { "route": "/build.py", "statusCode": 404 },
+    { "route": "/deploy.sh", "statusCode": 404 },
+    { "route": "/README.md", "statusCode": 404 },
+    { "route": "/swa-cli.config.json", "statusCode": 404 },
+    { "route": "/.claude/*", "statusCode": 404 },
+    { "route": "/.git/*", "statusCode": 404 },
+    {
+      "route": "/assets/fonts/*",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" }
+    },
+    {
+      "route": "/assets/*",
+      "headers": { "Cache-Control": "public, max-age=86400" }
+    }
+  ],
+  "responseOverrides": {
+    "404": { "rewrite": "/404.html", "statusCode": 404 }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+  },
+  "mimeTypes": {
+    ".woff2": "font/woff2",
+    ".pdf": "application/pdf"
+  }
+}
